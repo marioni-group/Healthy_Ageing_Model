@@ -30,7 +30,7 @@ This project analyzes LBC1936 Wave 1 data to explore how epigenetic clocks and l
   - Linear models predicting domains and HA
   - Epigenetic clocks and lifestyle factors as predictors
 - **QC**: of clocks data
-- **Diagnostics**: posterior predictive check, linearity, homogeneity of variance, normality of residuals.
+- **Diagnostics**: posterior predictive check, linearity, homogeneity of variance, normality of residuals
 - **Reporting**: forest plots for model results
   
 
