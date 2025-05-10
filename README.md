@@ -28,13 +28,13 @@ This project analyzes LBC1936 Wave 1 data to explore how epigenetic clocks and l
 ### `05_Linear_Models/`
 - **Modeling**:
   - Linear models predicting domains and HA
-  - Epigenetic clocks and lifestyle factors as predictors
+  - Epigenetic clocks and disease risk factors as predictors
 - **QC**: of clocks data
 - **Diagnostics**: posterior predictive check, linearity, homogeneity of variance, normality of residuals
 - **Reporting**: forest plots for model results
   
 
 ## Notes
-- Uses `LBC1936` data — not included in this repo due to data sensitivity
+- Uses `LBC1936` data — not included in this repository due to data sensitivity
 - Paths are relative and assume project is run from the wd `/Volumes/igmm/marioni-lab/Ella_Shuttleworth`
 - This project requires several R packages, which will be installed automatically when you run the scripts.
