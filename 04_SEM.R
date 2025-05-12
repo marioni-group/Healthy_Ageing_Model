@@ -61,10 +61,18 @@ models <- list(
 )
 
 #Fit each model, generate SEM plot, print fit measures and summary and generate correlation matrix
+
+#Cognitive model
 cog_mod <- sem(model = c, data = my_data_or_r, missing = "ml.x")
 
+# Get standardized edge loadings
+cog_edges <- parameterEstimates(cog_mod, standardized = TRUE)
+cog_edge_colours <- ifelse(cog_edges$std.all >= 0, "blue", "red")
+
+par(family = "Times")
 semPaths(cog_mod,
          what = "std",         # Show standardized estimate
+         edge.color = cog_edge_colours,  #Set blue and red edges
          layout = "tree2",        # Arrange nodes in a hierarchical tree structure
          edge.label.cex = 0.8,    # Adjust size of edge labels
          curveAdjacent = TRUE,   # Curve edges for better clarity
@@ -74,9 +82,9 @@ semPaths(cog_mod,
          fade = FALSE,            #stops edge fading based on loading
          residuals = FALSE,      #removes circle arrows
          intercepts = FALSE,     #removes triangles
-         nodeLabels = c("digit\nspan\nbackwards", "verbal\npaired\nassociates", "logical\nmemory", 
-                        "matrix\nreasoning","block\ndesign", "spatial\nspan", "digit\nsymbol", 
-                        "symbol\nsearch", "inspection\ntime", "reaction\ntime", "verbal\nfluency", 
+         nodeLabels = c("Digit\nSpan\nBackwards", "Verbal\nPaired\nAssociates", "Logical\nMemory", 
+                        "Matrix\nReasoning","Block\nDesign", "Spatial\nSpan", "Digit\nSymbol", 
+                        "Symbol\nSearch", "Inspection\nTime", "Reaction\nTime", "Verbal\nFluency", 
                         "WTAR","NART", "Cognitive")
 )
 print(fitMeasures(cog_mod, c("cfi", "tli", "rmsea", "srmr"))
@@ -92,23 +100,36 @@ cog_mod_summary_df$fdr_pvalue <- p.adjust(cog_mod_summary_df$pvalue, method = "f
 print(cog_mod_summary_df)
 
 #correlation matrix
+cog_labels <- c("Digit Span Backwards", "Matrix Reasoning", "Block Design", 
+                    "Digit Symbol", "Symbol Search", "NART", 
+                    "Logical Memory", "Verbal Paired Associates", "Inspection Time",
+                    "Reaction Time", "Spatial Span", "Verbal Fluency", "WTAR")
 cog_cor <- lavInspect(cog_mod, "sampstat")$cov
 cog_cor <- cov2cor(cog_cor[cog_tests_list, cog_tests_list])
-corrplot(cog_cor, type = "lower", order = "hclust", tl.col = "black", addCoef.col = 'black', 
-         method = "color", number.cex = 0.7, number.font = 1)
+colnames(cog_cor) <- cog_labels
+rownames(cog_cor) <- cog_labels
+corrplot(cog_cor, type = "lower", order = "hclust", tl.col = "black", tl.cex = 0.7, 
+         addCoef.col = 'black', method = "color", number.cex = 0.7, number.font = 1)
 
 #pca and scree plot
 cog_scores_df <- my_data_or_r[, c(60:64, 67, 72:74, 76:79)]
 cog_scores_df <- cog_scores_df[complete.cases(cog_scores_df), ]
 cog_pca <- prcomp(cog_scores_df, center = TRUE, scale. = TRUE)
 cog_explained_variance <- summary(cog_pca)$importance[2,]
-screeplot(cog_pca, main = "Scree Plot of Cog PCA", type = "lines", col = "blue")
+screeplot(cog_pca, main = "Scree Plot of Cog PCA", type = "lines", npcs = 13, col = "blue")
 title(xlab = "Principal Component")
 print(cog_explained_variance)
 
+#Biological model
 bio_mod <- sem(model = b, data = my_data_or_r, missing = "ml.x")
+
+bio_edges <- parameterEstimates(bio_mod, standardized = TRUE)
+bio_edge_colours <- ifelse(bio_edges$std.all >= 0, "blue", "red")
+
+par(family = "Times")
 semPaths(bio_mod,
          what = "std",         # Show standardized estimate
+         edge.color = bio_edge_colours,  #Set blue and red edges
          layout = "tree2",        # Arrange nodes in a hierarchical tree structure
          edge.label.cex = 0.8,    # Adjust size of edge labels
          curveAdjacent = TRUE,   # Curve edges for better clarity
@@ -118,9 +139,9 @@ semPaths(bio_mod,
          fade = FALSE,            #stops edge fading based on loading
          residuals = FALSE,      #removes circle arrows
          intercepts = FALSE,     #removes triangles
-         nodeLabels = c("creatinine", "hba1c", "hdlc", "hdl\nratio", 
-                        "triglycerides", "tsh", "c-reactive\nprotein", "fibrinogen",
-                        "neutrophil/\nleukocyte\nratio", "telomere\nlength\nbasepairs", "Biological")
+         nodeLabels = c("Creatinine", "HbA1C", "HDL\nCholesterol", "HDL\nRatio", 
+                        "Triglycerides", "TSH", "CRP", "Fibrinogen",
+                        "Neutrophil/\nLeukocyte\nRatio", "Telomere\nLength\n(basepairs)", "Biological")
 )
 print(fitMeasures(bio_mod, c("cfi", "tli", "rmsea", "srmr"))
 )
@@ -133,9 +154,15 @@ bio_mod_summary_df <- parameterEstimates(bio_mod)
 bio_mod_summary_df$fdr_pvalue <- p.adjust(bio_mod_summary_df$pvalue, method = "fdr")
 print(bio_mod_summary_df)
 
+bio_labels <- c("Creatinine", "HbA1C", "HDL Cholesterol", 
+                "HDL Ratio", "Triglycerides", "CRP", 
+                "TSH", "Fibrinogen", "Neutrophil/Leukocyte Ratio", 
+                "Telomere Length (basepairs)")
 bio_cor <- lavInspect(bio_mod, "sampstat")$cov
 bio_cor <- cov2cor(bio_cor[bio_tests_list, bio_tests_list])
-corrplot(bio_cor, type = "lower", order = "hclust", tl.col = "black", addCoef.col = 'black', 
+colnames(bio_cor) <- bio_labels
+rownames(bio_cor) <- bio_labels
+corrplot(bio_cor, type = "lower", order = "hclust", tl.col = "black", tl.cex = 0.7, addCoef.col = 'black', 
          method = "color", number.cex = 0.7, number.font = 1)
 
 bio_scores_df <- my_data_or_r[, c(132, 139, 145:150, 324, 328)]
@@ -146,9 +173,16 @@ screeplot(bio_pca, main = "Scree Plot of Bio PCA", type = "lines", col = "blue")
 title(xlab = "Principal Component")
 print(bio_explained_variance)
 
+#Physical model
 phys_mod <- sem(model = p, data = my_data_or_r, missing = "ml.x")
+
+phys_edges <- parameterEstimates(phys_mod, standardized = TRUE)
+phys_edge_colours <- ifelse(phys_edges$std.all >= 0, "blue", "red")
+
+par(family = "Times")
 semPaths(phys_mod,
          what = "std",         # Show standardized estimate
+         edge.color = phys_edge_colours,  #Set blue and red edges
          layout = "tree2",        # Arrange nodes in a hierarchical tree structure
          edge.label.cex = 0.8,    # Adjust size of edge labels
          curveAdjacent = TRUE,   # Curve edges for better clarity
@@ -158,8 +192,8 @@ semPaths(phys_mod,
          fade = FALSE,            #stops edge fading based on loading
          residuals = FALSE,      #removes circle arrows
          intercepts = FALSE,     #removes triangles
-         nodeLabels = c("grip\nstrength", "six\nmetre\nwalk", "systolic\nblood\npressure",
-                        "fvc", "fev", "adl\n(disability)", "Physical")
+         nodeLabels = c("Grip\nStrength", "Six\nMetre\nWalk", "Systolic\nBlood\nPressure",
+                        "FVC", "FEV", "ADL\n(disability)", "Physical")
 )
 print(fitMeasures(phys_mod, c("cfi", "tli", "rmsea", "srmr"))
 )
@@ -173,9 +207,13 @@ phys_mod_summary_df <- parameterEstimates(phys_mod)
 phys_mod_summary_df$fdr_pvalue <- p.adjust(phys_mod_summary_df$pvalue, method = "fdr")
 print(phys_mod_summary_df)
 
+phys_labels <- c("Grip Strength", "Six Metre Walk", "Systolic Bloof Pressure", 
+                 "FVC", "FEV", "ADL (disability)")
 phys_cor <- lavInspect(phys_mod, "sampstat")$cov
 phys_cor <- cov2cor(phys_cor[phys_tests_list, phys_tests_list])
-corrplot(phys_cor, type = "lower", order = "hclust", tl.col = "black", addCoef.col = 'black', 
+colnames(phys_cor) <- phys_labels
+rownames(phys_cor) <- phys_labels
+corrplot(phys_cor, type = "lower", order = "hclust", tl.col = "black", tl.cex = 1.3, addCoef.col = 'black', 
          method = "color", number.cex = 1.3, number.font = 1)
 
 phys_scores_df <- my_data_or_r[, c(91, 95, 108:109, 325:326)]
@@ -186,9 +224,16 @@ screeplot(phys_pca, main = "Scree Plot of Phys PCA", type = "lines", col = "blue
 title(xlab = "Principal Component")
 print(phys_explained_variance)
 
+#Subjective model
 subj_mod <- sem(model = s, data = my_data_or_r, missing = "ml.x")
+
+subj_edges <- parameterEstimates(subj_mod, standardized = TRUE)
+subj_edge_colours <- ifelse(subj_edges$std.all >= 0, "blue", "red")
+
+par(family = "Times")
 semPaths(subj_mod,
          what = "std",         # Show standardized estimate
+         edge.color = subj_edge_colours,  #Set blue and red edges
          layout = "tree2",        # Arrange nodes in a hierarchical tree structure
          edge.label.cex = 0.8,    # Adjust size of edge labels
          curveAdjacent = TRUE,   # Curve edges for better clarity
@@ -212,10 +257,14 @@ subj_mod_summary_df <- parameterEstimates(subj_mod)
 subj_mod_summary_df$fdr_pvalue <- p.adjust(subj_mod_summary_df$pvalue, method = "fdr")
 print(subj_mod_summary_df)
 
+subj_labels <- c("WHOQOL Domain1 physical", "WHOQOL Domain2 psychological", 
+                 "WHOQOL Domain3 social", "WHOQOL Domain4 environmental")
 subj_cor <- lavInspect(subj_mod, "sampstat")$cov
 subj_cor <- cov2cor(subj_cor[subj_tests_list, subj_tests_list])
-corrplot(subj_cor, type = "lower", order = "hclust", tl.col = "black", addCoef.col = 'black', 
-         method = "color", number.cex = 1.7, number.font = 1)
+colnames(subj_cor) <- subj_labels
+rownames(subj_cor) <- subj_labels
+corrplot(subj_cor, type = "lower", order = "hclust", tl.col = "black", tl.cex = 1.1, addCoef.col = 'black', 
+         method = "color", number.cex = 1.1, number.font = 1)
 
 subj_scores_df <- my_data_or_r[, c(257:260)]
 subj_scores_df <- subj_scores_df[complete.cases(subj_scores_df), ]
@@ -230,6 +279,8 @@ HA_model <- '
   HA =~ cognitive + physical + biological + subjective
 '
 HA_mod <- sem(c(c, p, b, s, HA_model), data = my_data_or_r, missing = "ml.x")
+
+par(family = "Times")
 semPaths(HA_mod,
          what = "std",         # Show standardized estimate
          layout = "tree2",        # Arrange nodes in a hierarchical tree structure
@@ -242,8 +293,10 @@ semPaths(HA_mod,
          residuals = FALSE,      #removes circle arrows
          intercepts = FALSE,     #removes triangles
          structural = TRUE,      #removes first layer of loadings
+         posCol = "blue",    #sets positive loading colour
+         negCol = "red",    #sets negative loading colour
          nodeLabels = c("Cognitive", "Physical", "Biological", "QOL", 
-                        "Healthy Ageing")
+                        "Healthy\nAgeing")
 )
 summary(HA_mod, standardized = TRUE)
 print(fitMeasures(HA_mod, c("cfi", "tli", "rmsea", "srmr")))

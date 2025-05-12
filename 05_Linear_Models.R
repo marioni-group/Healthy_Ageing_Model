@@ -3,11 +3,13 @@ install.packages("tidyr")
 install.packages("performance")
 install.packages("patchwork") 
 install.packages("qqplotr")
+install.packages("showtext")
 library(ggplot2)
 library(tidyr)
 library(performance)
 library(patchwork)
 library(qqplotr)
+library(showtext)
 
 #extract HA scores     
 HA_scores <- lavPredict(HA_mod)
@@ -19,6 +21,12 @@ clocks_all_data <- read.csv("LBC_clock_output_LBC36.csv")
 #make correlation matrix of outcomes
 HA_outcomes <- c("cognitive", "physical", "biological", "subjective")
 HA_cor <- cor(HA_scores_df[, HA_outcomes], use = "complete.obs")
+rownames(HA_cor)[rownames(HA_cor) == "cognitive"] <- "Cognitive"
+colnames(HA_cor)[colnames(HA_cor) == "cognitive"] <- "Cognitive"
+rownames(HA_cor)[rownames(HA_cor) == "physical"] <- "Physical"
+colnames(HA_cor)[colnames(HA_cor) == "physical"] <- "Physical"
+rownames(HA_cor)[rownames(HA_cor) == "biological"] <- "Biological"
+colnames(HA_cor)[colnames(HA_cor) == "biological"] <- "Biological"
 rownames(HA_cor)[rownames(HA_cor) == "subjective"] <- "QOL"
 colnames(HA_cor)[colnames(HA_cor) == "subjective"] <- "QOL"
 
@@ -27,6 +35,7 @@ corrplot(HA_cor,
          type = "lower",
          order = "hclust",
          tl.col = "black",
+         tl.cex = 1.7,
          addCoef.col = "black",
          method = "color",
          number.cex = 1.7,
@@ -253,6 +262,19 @@ clocks_results$FDR_Pvalue <- p.adjust(clocks_results$P_Value, method = 'BH')
 #CI range calculation
 clocks_results$CI_range <- clocks_results$UpperCI - clocks_results$LowerCI
 
+# Add the Times New Roman font
+font_add(family = "Times New Roman", 
+         regular = "/System/Library/Fonts/Supplemental/Times New Roman.ttf")
+
+# Activate showtext to render text properly
+showtext_auto()
+
+clocks_results$Outcome <- factor(clocks_results$Outcome,
+                                 levels = c("cognitive", "physical", "biological", "QOL", "Healthy Ageing"),
+                                 labels = c("Cognitive", "Physical", "Biological", "QOL", "HA"))
+
+clocks_results$Outcome <- factor(clocks_results$Outcome, levels = rev(levels(factor(clocks_results$Outcome))))
+
 #Graph of models
 ggplot(clocks_results, aes(x = Outcome, y = Estimate, color = Predictor)) +  
   # Scatter points
@@ -262,21 +284,21 @@ ggplot(clocks_results, aes(x = Outcome, y = Estimate, color = Predictor)) +
   # Horizontal reference line
   geom_hline(yintercept = 0, linetype = "dashed", color = "black", size = 1) +
   # Labels and formatting
-  labs(title = "Associations Between Epigenetic Clocks and Healthy Ageing",
+  labs(title = "Associations Between Epigenetic Age Acceleration and Healthy Ageing",
        x = "Outcome",
        y = "Standardised Beta [95% CI]",
        color = "Predictor") +
   scale_color_manual(values = c("DNAmPhenoAge" = "blue", "DNAmGrimAge2BasedOnRealAge" = "red"),
                     labels = c("DNAmGrimAge2", "DNAmPhenoAge")) +  # Change legend label here
-  theme_minimal() +
+  theme_minimal(base_family = "Times New Roman") +
   theme(
-    plot.title = element_text(size = 16, face = "bold"),  # Increase title size
-    axis.text.y = element_text(size = 12),    # Increase y-axis label size
-    axis.title.y = element_text(size = 14),   # Increase y-axis title size
-    axis.text.x = element_text(size = 12),    # Increase x-axis label size
-    axis.title.x = element_text(size = 14),   # Increase x-axis title size
-    legend.text = element_text(size = 12),    # Increase legend text size
-    legend.title = element_text(size = 14)    # Increase legend title size
+    plot.title = element_text(size = 16, face = "bold", family = "Times New Roman"),
+    axis.text.y = element_text(size = 12, family = "Times New Roman"),
+    axis.title.y = element_text(size = 14, family = "Times New Roman"),
+    axis.text.x = element_text(size = 12, family = "Times New Roman"),
+    axis.title.x = element_text(size = 14, family = "Times New Roman"),
+    legend.text = element_text(size = 12, family = "Times New Roman"),
+    legend.title = element_text(size = 14, family = "Times New Roman")
   ) +
   coord_flip()  # Flip axes for readability
 
@@ -354,27 +376,32 @@ phenotypes_results$CI_range <- phenotypes_results$UpperCI - phenotypes_results$L
 phenotypes_results <- phenotypes_results[order(phenotypes_results$Predictor), ]
 
 #creating new names for the outcomes
-outcome_labels <- c(
-  "HA" = "Healthy Ageing",
-  "subjective" = "QOL"
-)
+outcome_labels <- c("cognitive" = "Cognitive", "physical" = "Physical", 
+                    "biological" = "Biological", "subjective" = "QOL", "HA" = "HA")
 
 # Plot using ggplot2
-ggplot(phenotypes_results, aes(x = Estimate, y = Predictor)) +
+ggplot(phenotypes_results, aes(x = Estimate, y = Predictor, color = Predictor)) +  # color by Predictor
   geom_point(size = 2) +
   geom_errorbarh(aes(xmin = LowerCI, xmax = UpperCI), height = 0.2) +
   geom_vline(xintercept = 0, linetype = "dotted", color = "black") +
   facet_wrap(~ Outcome, nrow = 3, ncol = 2, labeller = labeller(Outcome = outcome_labels)) +
   scale_x_continuous(limits = c(-0.4, 0.6)) +
-  theme_minimal() +
-  theme(panel.spacing = unit(1.5, "lines")) +
-  labs(
-    title = "Associations Between Phenotypes and Healthy Ageing", 
-    x = "Standardised Beta [95% CI]", 
-    y = "Predictor"
-  ) +
+  scale_color_brewer(palette = "Dark2") +  # You can change this to "Set1", etc.
+  theme_minimal(base_family = "Times New Roman") +  # Use Times New Roman globally
   theme(
-    plot.title = element_text(size = 14, face = "bold")) +  # Increase title size
+    panel.spacing = unit(1.5, "lines"),
+    plot.title = element_text(size = 14, face = "bold", family = "Times New Roman"),
+    axis.title = element_text(family = "Times New Roman"),
+    axis.text = element_text(family = "Times New Roman"),
+    strip.text = element_text(family = "Times New Roman"),  # facet labels
+    legend.position = "none"
+  ) +
+  labs(
+    title = "Associations Between Disease Risk Factors and Healthy Ageing", 
+    x = "Standardised Beta [95% CI]", 
+    y = "Predictor",
+    color = "Predictor"
+  ) +
   scale_y_discrete(labels = predictor_labels)
 
 library(openxlsx)
